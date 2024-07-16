@@ -311,6 +311,7 @@ def expectation_maximisation(
             pipeline.append_input_dataframe(df_comparison_vector_values)
             df_params = db_api.sql_pipeline_to_splink_dataframe(pipeline)
         param_records = df_params.as_pandas_dataframe()
+        param_records.columns = param_records.columns.str.lower()
         param_records = compute_proportions_for_new_parameters(param_records)
 
         df_params.drop_table_from_database_and_remove_from_cache()

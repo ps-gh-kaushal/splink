@@ -81,7 +81,7 @@ class SqlglotColumnTreeBuilder:
     @classmethod
     def from_raw_column_name_or_column_reference(cls, input_str, sqlglot_dialect):
         def tree_to_sqlglot_column_tree_builder_args(sqlglot_tree, sqlglot_dialect):
-            args = {"sqlglot_dialect": sqlglot_dialect, "quoted": True}
+            args = {"sqlglot_dialect": sqlglot_dialect, "quoted": False}
             if sqlglot_tree.find(exp.Bracket):
                 lit = sqlglot_tree.find(exp.Bracket).find(exp.Literal)
                 if lit.args["is_string"]:

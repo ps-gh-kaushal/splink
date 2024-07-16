@@ -393,6 +393,7 @@ def _cumulative_comparisons_to_be_scored_from_blocking_rules(
     pipeline.enqueue_sql(sql, "__splink__df_count_cumulative_blocks")
 
     result_df = db_api.sql_pipeline_to_splink_dataframe(pipeline).as_pandas_dataframe()
+    result_df.columns = result_df.columns.str.lower()
 
     # The above table won't include rules that have no matches
     all_rules_df = pd.DataFrame(

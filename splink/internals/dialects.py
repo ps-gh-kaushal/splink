@@ -341,6 +341,93 @@ class SparkDialect(SplinkDialect):
                 from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501
 
 
+class SnowflakeDialect(SplinkDialect):
+    _dialect_name_for_factory = "snowflake"
+
+    @property
+    def name(self):
+        return "snowflake"
+
+    @property
+    def levenshtein_function_name(self):
+        return "levenshtein"
+
+    @property
+    def damerau_levenshtein_function_name(self):
+        return "damerau_levenshtein"
+
+    @property
+    def jaro_function_name(self):
+        return "jaro_sim"
+
+    @property
+    def jaro_winkler_function_name(self):
+        return "jarowinkler_similarity"
+
+    @property
+    def jaccard_function_name(self):
+        return "jaccard"
+
+    @property
+    def default_date_format(self):
+        return "yyyy-MM-dd"
+
+    @property
+    def default_timestamp_format(self):
+        return "yyyy-MM-dd\\'T\\'HH:mm:ssXXX"
+
+    def _try_parse_date_raw(self, name: str, date_format: str = None) -> str:
+        if date_format is None:
+            date_format = self.default_date_format
+        return f"""to_date({name}, '{date_format}')"""
+
+    def _try_parse_timestamp_raw(self, name: str, timestamp_format: str = None) -> str:
+        if timestamp_format is None:
+            timestamp_format = self.default_timestamp_format
+        return f"""to_timestamp({name}, '{timestamp_format}')"""
+
+    def _regex_extract_raw(
+        self, name: str, pattern: str, capture_group: int = 0
+    ) -> str:
+        return f"regexp_extract({name}, '{pattern}', {capture_group})"
+
+    @property
+    def infinity_expression(self):
+        return "'infinity'"
+
+    def random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        if proportion == 1.0:
+            return ""
+        percent = proportion * 100
+        if seed:
+            return f" ORDER BY rand({seed}) LIMIT {round(sample_size)}"
+        else:
+            return f" TABLESAMPLE ({percent} PERCENT) "
+
+    def explode_arrays_sql(
+        self,
+        tbl_name: str,
+        columns_to_explode: list[str],
+        other_columns_to_retain: list[str],
+    ) -> str:
+        """Generated sql that explodes one or more columns in a table"""
+        columns_to_explode = columns_to_explode.copy()
+        other_columns_to_retain = other_columns_to_retain.copy()
+        if len(columns_to_explode) == 0:
+            return f"select {','.join(other_columns_to_retain)} from {tbl_name}"
+        else:
+            column_to_explode = columns_to_explode.pop()
+            cols_to_select = (
+                [f"explode({column_to_explode}) as {column_to_explode}"]
+                + other_columns_to_retain
+                + columns_to_explode
+            )
+        return f"""select {','.join(cols_to_select)}
+                from ({self.explode_arrays_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501
+
+
 class SQLiteDialect(SplinkDialect):
     _dialect_name_for_factory = "sqlite"
 
